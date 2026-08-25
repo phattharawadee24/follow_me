@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'api_service.dart';
+
 class CheckinScreen extends StatefulWidget {
   const CheckinScreen({super.key});
 
@@ -75,17 +77,39 @@ class _CheckinScreenState extends State<CheckinScreen> {
     );
   }
 
-  void _checkIn() {
-    if (_position == null) return;
-    setState(() => _isCheckedIn = true);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
+  Future<void> _checkIn() async {
+    final position = _position;
+    if (position == null) return;
+    final token = await ApiService.getToken();
+    if (!mounted) return;
+    if (token == null || token.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อนเช็คอิน')),
+      );
+      return;
+    }
+
+    try {
+      await ApiService.checkin(
+        token: token,
+        lat: position.latitude,
+        lng: position.longitude,
+        locationName: 'ตำแหน่งปัจจุบัน',
+      );
+      if (!mounted) return;
+      setState(() => _isCheckedIn = true);
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('เช็คอินสำเร็จ เพื่อนของคุณเห็นตำแหน่งนี้แล้ว'),
           behavior: SnackBarBehavior.floating,
         ),
       );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override

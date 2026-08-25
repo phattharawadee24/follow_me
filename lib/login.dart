@@ -1,7 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'api_service.dart';
+import 'main.dart';
 
 // ======================== AUTH SERVICE จำลอง ========================
 class AuthService {
@@ -43,29 +44,36 @@ class _LoginPageState extends State<LoginPage> {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   bool obscure = true;
+  bool isLoading = false;
 
   void _login() async {
-    final acc = await AuthService.getAccount();
-    if (!await AuthService.hasAccount()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ยังไม่มีบัญชี กรุณาสมัครก่อน')),
-      );
-      _goSignup();
+    if (emailCtrl.text.trim().isEmpty || passCtrl.text.isEmpty) {
+      _showError('กรุณากรอกอีเมลและรหัสผ่าน');
       return;
     }
-    if (emailCtrl.text == acc['email'] && passCtrl.text == acc['password']) {
+    setState(() => isLoading = true);
+    try {
+      final data = await ApiService.login(
+        email: emailCtrl.text,
+        password: passCtrl.text,
+      );
+      await ApiService.saveSession(data);
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const PersonalPage()),
+        MaterialPageRoute(builder: (_) => const HomePage()),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('อีเมลหรือรหัสผ่านไม่ถูกต้อง'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } on ApiException catch (error) {
+      if (mounted) _showError(error.message);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   void _goSignup() {
@@ -144,7 +152,10 @@ class _LoginPageState extends State<LoginPage> {
                   onToggle: () => setState(() => obscure = !obscure),
                 ),
                 const SizedBox(height: 22),
-                _mainButton(text: "เข้าสู่ระบบ", onTap: _login),
+                _mainButton(
+                  text: isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ',
+                  onTap: isLoading ? null : _login,
+                ),
                 const SizedBox(height: 18),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -207,7 +218,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _mainButton({required String text, required VoidCallback onTap}) {
+  Widget _mainButton({required String text, required VoidCallback? onTap}) {
     return SizedBox(
       width: double.infinity,
       height: 52,
@@ -234,6 +245,88 @@ class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
   @override
   State<SignupPage> createState() => _SignupPageState();
+}
+
+class OtpPage extends StatefulWidget {
+  const OtpPage({super.key, required this.email});
+
+  final String email;
+
+  @override
+  State<OtpPage> createState() => _OtpPageState();
+}
+
+class _OtpPageState extends State<OtpPage> {
+  final otpCtrl = TextEditingController();
+  bool isLoading = false;
+
+  Future<void> _verify() async {
+    if (otpCtrl.text.trim().length != 6) {
+      _showError('กรุณากรอกรหัส OTP 6 หลัก');
+      return;
+    }
+    setState(() => isLoading = true);
+    try {
+      final data = await ApiService.verifyOtp(
+        email: widget.email,
+        otp: otpCtrl.text,
+      );
+      await ApiService.saveSession(data);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ยืนยันอีเมลสำเร็จ กรุณาเข้าสู่ระบบ')),
+      );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (_) => false,
+      );
+    } on ApiException catch (error) {
+      if (mounted) _showError(error.message);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('ยืนยันอีเมล')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Text('กรอกรหัส OTP ที่ส่งไปยัง ${widget.email}'),
+            const SizedBox(height: 20),
+            TextField(
+              controller: otpCtrl,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              decoration: const InputDecoration(
+                labelText: 'รหัส OTP',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: FilledButton(
+                onPressed: isLoading ? null : _verify,
+                child: Text(isLoading ? 'กำลังตรวจสอบ...' : 'ยืนยัน OTP'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SignupPageState extends State<SignupPage> {
@@ -264,20 +357,26 @@ class _SignupPageState extends State<SignupPage> {
       ).showSnackBar(const SnackBar(content: Text('รหัสผ่านต้อง 6 ตัวขึ้นไป')));
       return;
     }
-    await AuthService.saveAccount(
-      name: nameCtrl.text,
-      email: emailCtrl.text,
-      password: passCtrl.text,
-    );
+    try {
+      await ApiService.register(
+        name: nameCtrl.text,
+        email: emailCtrl.text,
+        password: passCtrl.text,
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('สมัครสำเร็จ! กรุณาเข้าสู่ระบบ'),
-        backgroundColor: Colors.green,
-      ),
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => OtpPage(email: emailCtrl.text.trim())),
     );
-    Navigator.pop(context); // เด้งกลับไปหน้า Login ตามที่ขอ
   }
 
   @override
@@ -401,261 +500,6 @@ class _SignupPageState extends State<SignupPage> {
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(16),
-        ),
-      ),
-    );
-  }
-}
-
-// ======================== PERSONAL PAGE - ใส่รูป ตั้งชื่อ เปลี่ยนรหัส ========================
-class PersonalPage extends StatefulWidget {
-  const PersonalPage({super.key});
-  @override
-  State<PersonalPage> createState() => _PersonalPageState();
-}
-
-class _PersonalPageState extends State<PersonalPage> {
-  String name = '', email = '';
-  File? imageFile;
-  final picker = ImagePicker();
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final acc = await AuthService.getAccount();
-    final p = await SharedPreferences.getInstance();
-    setState(() {
-      name = acc['name'] ?? '';
-      email = acc['email'] ?? '';
-      final path = p.getString('imagePath');
-      if (path != null) imageFile = File(path);
-    });
-  }
-
-  Future<void> _pickImage() async {
-    final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      final p = await SharedPreferences.getInstance();
-      await p.setString('imagePath', picked.path);
-      setState(() => imageFile = File(picked.path));
-    }
-  }
-
-  void _editName() {
-    final ctrl = TextEditingController(text: name);
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('ตั้งชื่อใหม่'),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ยกเลิก'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final pref = await SharedPreferences.getInstance();
-              await pref.setString('name', ctrl.text);
-              setState(() => name = ctrl.text);
-              Navigator.pop(context);
-            },
-            child: const Text('บันทึก'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _changePassword() {
-    final oldCtrl = TextEditingController();
-    final newCtrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('เปลี่ยนรหัสผ่าน'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: oldCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'รหัสเก่า',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: newCtrl,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'รหัสใหม่',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('ยกเลิก'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final acc = await AuthService.getAccount();
-              if (oldCtrl.text != acc['password']) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('รหัสเก่าไม่ถูก')));
-                return;
-              }
-              final pref = await SharedPreferences.getInstance();
-              await pref.setString('password', newCtrl.text);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('เปลี่ยนรหัสแล้ว'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('เปลี่ยน'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _logout() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginPage()),
-      (_) => false,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 176, 86, 172),
-              Color.fromARGB(255, 179, 92, 198),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      'โปรไฟล์ของฉัน',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: _logout,
-                      icon: const Icon(Icons.logout, color: Colors.white),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: const Color(0xFFE8D9F0),
-                      backgroundImage: imageFile != null
-                          ? FileImage(imageFile!)
-                          : null,
-                      child: imageFile == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: Colors.black54,
-                            )
-                          : null,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _pickImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.camera_alt, size: 18),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(email, style: const TextStyle(color: Colors.white70)),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.92),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.edit),
-                        title: const Text('ตั้งชื่อเรา'),
-                        subtitle: Text(name),
-                        onTap: _editName,
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.lock),
-                        title: const Text('เปลี่ยนรหัสผ่าน'),
-                        onTap: _changePassword,
-                      ),
-                      const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.image),
-                        title: const Text('เปลี่ยนรูปโปรไฟล์'),
-                        onTap: _pickImage,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
