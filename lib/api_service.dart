@@ -87,8 +87,8 @@ class ApiService {
       );
     } on TimeoutException {
       throw const ApiException('เซิร์ฟเวอร์ตอบสนองช้า กรุณาลองใหม่อีกครั้ง');
-    } on http.ClientException {
-      throw const ApiException('เกิดข้อผิดพลาดระหว่างเชื่อมต่อ API');
+    } on http.ClientException catch (error) {
+      throw ApiException(_clientErrorMessage(error));
     }
     final body = await response.stream.bytesToString();
     return _decodeResponse(response.statusCode, body);
@@ -117,8 +117,10 @@ class ApiService {
       throw const ApiException(
         'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต',
       );
-    } on http.ClientException {
-      throw const ApiException('เกิดข้อผิดพลาดระหว่างเชื่อมต่อ API');
+    } on TimeoutException {
+      throw const ApiException('เซิร์ฟเวอร์ตอบสนองช้า กรุณาลองใหม่อีกครั้ง');
+    } on http.ClientException catch (error) {
+      throw ApiException(_clientErrorMessage(error));
     }
 
     return _decodeResponse(response.statusCode, response.body);
@@ -138,6 +140,14 @@ class ApiService {
       throw ApiException(message.toString());
     }
     return data;
+  }
+
+  static String _clientErrorMessage(http.ClientException error) {
+    final details = error.message.trim();
+    if (details.isEmpty) {
+      return 'เชื่อมต่อ API ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตหรือ CORS ของเซิร์ฟเวอร์';
+    }
+    return 'เชื่อมต่อ API ไม่สำเร็จ: $details';
   }
 
   static Future<void> saveSession(Map<String, dynamic> data) async {
