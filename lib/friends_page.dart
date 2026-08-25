@@ -15,7 +15,7 @@ class Friend {
 
   Friend({
     required this.id,
-    required this.name,
+    required  this.name,
     this.avatarUrl,
     this.isOnline = false,
     this.lastCheckinAt,
