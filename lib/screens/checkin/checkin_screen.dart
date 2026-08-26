@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../../core/errors/api_exception.dart';
 import '../../core/services/api_service.dart';
@@ -16,7 +17,7 @@ class CheckinScreen extends StatefulWidget {
 }
 
 class _CheckinScreenState extends State<CheckinScreen> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
   Position? _position;
   String? _errorMessage;
   bool _isLoadingLocation = true;
@@ -88,11 +89,9 @@ class _CheckinScreenState extends State<CheckinScreen> {
     final position = _position;
     if (position == null) return;
 
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLngZoom(
-        LatLng(position.latitude, position.longitude),
-        16,
-      ),
+    _mapController.move(
+      LatLng(position.latitude, position.longitude),
+      16.0,
     );
   }
 
@@ -416,25 +415,69 @@ class _CheckinScreenState extends State<CheckinScreen> {
       ),
       body: Stack(
         children: [
-          // Google Map View
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: mapCenter,
-              zoom: 15,
+          // OpenStreetMap View
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: mapCenter,
+              initialZoom: 15.0,
+              minZoom: 3.0,
+              maxZoom: 19.0,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
             ),
-            onMapCreated: (controller) => _mapController = controller,
-            myLocationEnabled: hasLocation,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            markers: hasLocation
-                ? {
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.followme.app',
+                maxZoom: 19,
+              ),
+              if (hasLocation)
+                MarkerLayer(
+                  markers: [
                     Marker(
-                      markerId: const MarkerId('current-user-pos'),
-                      position: mapCenter,
-                      infoWindow: const InfoWindow(title: 'ตำแหน่งของคุณในขณะนี้'),
+                      point: mapCenter,
+                      width: 60,
+                      height: 60,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.person_pin_circle_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  }
-                : const {},
+                  ],
+                ),
+            ],
           ),
 
           // Top action buttons
