@@ -53,13 +53,13 @@ class _AppDrawerState extends State<AppDrawer> {
     );
 
     if (confirm == true) {
-      await ApiService.logout();
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (_) => false,
       );
+      ApiService.logout();
     }
   }
 

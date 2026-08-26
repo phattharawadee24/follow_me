@@ -211,12 +211,14 @@ class ApiService {
 
   /// POST /api/auth/logout
   static Future<Map<String, dynamic>> logout() async {
+    await StorageService.clearSession();
     try {
-      final res = await _request('POST', ApiEndpoints.logout);
-      await StorageService.clearSession();
+      final res = await _request('POST', ApiEndpoints.logout).timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => {'message': 'Logged out'},
+      );
       return res;
     } catch (_) {
-      await StorageService.clearSession();
       return {'message': 'Logged out'};
     }
   }
