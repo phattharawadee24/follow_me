@@ -823,14 +823,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'followme',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                            letterSpacing: -0.3,
-                          ),
+                        Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                width: 22,
+                                height: 22,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'follow me',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                          ],
                         ),
                         Text(
                           _isLoadingCheckins

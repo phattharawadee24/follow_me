@@ -144,24 +144,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Brand Icon & Title
                     Center(
                       child: Container(
-                        width: 72,
-                        height: 72,
+                        width: 110,
+                        height: 110,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.5),
-                            width: 2,
-                          ),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                         ),
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          color: AppTheme.primaryColor,
-                          size: 40,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     const Text(
                       'followme',
                       textAlign: TextAlign.center,
