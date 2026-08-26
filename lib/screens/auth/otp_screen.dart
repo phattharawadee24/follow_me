@@ -150,68 +150,113 @@ class _OtpScreenState extends State<OtpScreen> {
       _startCountdown();
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.message),
-          backgroundColor: AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (error.message.toLowerCase().contains('already verified') ||
+          error.message.contains('ยืนยันแล้ว')) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.check_circle_outline, color: brandTeal),
+                SizedBox(width: 8),
+                Text('ยืนยันอีเมลแล้ว', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Text(
+              'อีเมล $email ได้รับการยืนยันเรียบร้อยแล้ว สามารถเข้าสู่ระบบเพื่อใช้งานได้ทันที',
+              style: const TextStyle(color: Color(0xFF475569), fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('ปิด', style: TextStyle(color: Color(0xFF64748B))),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: brandTeal,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    (_) => false,
+                  );
+                },
+                child: const Text('เข้าสู่ระบบ', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.message),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isResending = false);
     }
   }
+
+  static const Color brandTeal = Color(0xFF2C7A7B);
+  static const Color inputBg = Color(0xFFF3F5F7);
+  static const Color inputBorder = Color(0xFFE2E8F0);
 
   @override
   Widget build(BuildContext context) {
     final email = _currentEmail;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F6),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back, color: brandTeal, size: 24),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F172A),
-              Color(0xFF1E293B),
-            ],
+        titleSpacing: 0,
+        title: const Text(
+          'ยืนยันรหัส OTP',
+          style: TextStyle(
+            color: brandTeal,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
-                      width: 72,
-                      height: 72,
+                      width: 76,
+                      height: 76,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                        color: brandTeal.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          color: brandTeal.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
                       child: const Icon(
                         Icons.mark_email_read_outlined,
-                        color: AppTheme.primaryColor,
-                        size: 38,
+                        color: brandTeal,
+                        size: 40,
                       ),
                     ),
                   ),
@@ -220,8 +265,8 @@ class _OtpScreenState extends State<OtpScreen> {
                     'ยืนยันรหัส OTP',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
+                      color: Color(0xFF0F172A),
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -236,13 +281,13 @@ class _OtpScreenState extends State<OtpScreen> {
                             'ส่งรหัสไปยัง: $email',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              color: Color(0xFF94A3B8),
+                              color: Color(0xFF64748B),
                               fontSize: 14,
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.edit, size: 16, color: Color(0xFF38BDF8)),
+                          icon: const Icon(Icons.edit, size: 16, color: brandTeal),
                           tooltip: 'แก้ไขอีเมล',
                           onPressed: () => setState(() => _isEditingEmail = true),
                         ),
@@ -253,10 +298,24 @@ class _OtpScreenState extends State<OtpScreen> {
                     TextFormField(
                       controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: Colors.black87),
+                      style: const TextStyle(color: Color(0xFF1E293B), fontSize: 15),
                       decoration: InputDecoration(
                         hintText: 'กรอกอีเมลของคุณ',
-                        prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                        filled: true,
+                        fillColor: inputBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: brandTeal, width: 1.5),
+                        ),
+                        prefixIcon: const Icon(Icons.email_outlined, color: brandTeal),
                         suffixIcon: email.isNotEmpty && widget.email.isNotEmpty
                             ? IconButton(
                                 icon: const Icon(Icons.check, color: AppTheme.successColor),
@@ -280,25 +339,41 @@ class _OtpScreenState extends State<OtpScreen> {
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 10,
-                      color: Colors.black87,
+                      color: Color(0xFF0F172A),
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '000000',
+                      hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
                       counterText: '',
+                      filled: true,
+                      fillColor: inputBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: inputBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: inputBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: brandTeal, width: 1.8),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
 
                   // Verify Button
                   SizedBox(
-                    height: 52,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _verifyOtp,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: brandTeal,
                         foregroundColor: Colors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: _isLoading
@@ -327,7 +402,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     children: [
                       const Text(
                         'ไม่ได้รับรหัส? ',
-                        style: TextStyle(color: Color(0xFF94A3B8)),
+                        style: TextStyle(color: Color(0xFF64748B)),
                       ),
                       GestureDetector(
                         onTap: (_countdown > 0 || _isResending) ? null : _resendOtp,
@@ -337,8 +412,8 @@ class _OtpScreenState extends State<OtpScreen> {
                               : (_isResending ? 'กำลังส่ง...' : 'ขอรหัสใหม่'),
                           style: TextStyle(
                             color: _countdown > 0
-                                ? const Color(0xFF64748B)
-                                : const Color(0xFF38BDF8),
+                                ? const Color(0xFF94A3B8)
+                                : brandTeal,
                             fontWeight: FontWeight.bold,
                             decoration: _countdown > 0
                                 ? TextDecoration.none
