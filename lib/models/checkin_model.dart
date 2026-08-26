@@ -65,10 +65,14 @@ class CheckinModel {
           : int.tryParse(json['userId']?.toString() ?? ''),
       lat: (json['lat'] is num)
           ? (json['lat'] as num).toDouble()
-          : double.tryParse(json['lat']?.toString() ?? '0.0') ?? 0.0,
+          : (json['latitude'] is num)
+              ? (json['latitude'] as num).toDouble()
+              : double.tryParse(json['lat']?.toString() ?? json['latitude']?.toString() ?? '0.0') ?? 0.0,
       lng: (json['lng'] is num)
           ? (json['lng'] as num).toDouble()
-          : double.tryParse(json['lng']?.toString() ?? '0.0') ?? 0.0,
+          : (json['longitude'] is num)
+              ? (json['longitude'] as num).toDouble()
+              : double.tryParse(json['lng']?.toString() ?? json['longitude']?.toString() ?? '0.0') ?? 0.0,
       locationName: json['locationName']?.toString() ?? 'Unknown Place',
       address: json['address']?.toString(),
       accuracy: (json['accuracy'] is num)

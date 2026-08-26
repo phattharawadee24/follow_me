@@ -13,6 +13,7 @@ void main() {
 
     await tester.tap(find.text('สมัครสมาชิก'));
     await tester.pumpAndSettle();
-    expect(find.text('สร้างบัญชีใหม่'), findsOneWidget);
+    expect(find.text('ชื่อ-นามสกุล'), findsOneWidget);
+    expect(find.text('สมัครสมาชิก'), findsWidgets);
   });
 }

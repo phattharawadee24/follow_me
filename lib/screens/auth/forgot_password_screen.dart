@@ -139,64 +139,67 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
+  static const Color brandTeal = Color(0xFF2C7A7B);
+  static const Color inputBg = Color(0xFFF3F5F7);
+  static const Color inputBorder = Color(0xFFE2E8F0);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F6),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back, color: brandTeal, size: 24),
           onPressed: () => Navigator.pop(context),
         ),
-      ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F172A),
-              Color(0xFF1E293B),
-            ],
+        titleSpacing: 0,
+        title: const Text(
+          'รีเซ็ตรหัสผ่าน',
+          style: TextStyle(
+            color: brandTeal,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
-                      width: 72,
-                      height: 72,
+                      width: 76,
+                      height: 76,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.15),
+                        color: brandTeal.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.5),
+                          color: brandTeal.withValues(alpha: 0.3),
                           width: 2,
                         ),
                       ),
                       child: const Icon(
                         Icons.lock_reset_rounded,
-                        color: AppTheme.primaryColor,
-                        size: 38,
+                        color: brandTeal,
+                        size: 40,
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'รีเซ็ตรหัสผ่าน',
+                    'ลืมรหัสผ่าน',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
+                      color: Color(0xFF0F172A),
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -207,21 +210,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         : 'กรอกรหัส OTP และตั้งรหัสผ่านใหม่ของคุณ',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: Color(0xFF64748B),
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   // Email
                   TextField(
                     controller: _emailCtrl,
                     enabled: !_isOtpSent,
                     keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: Colors.black87),
-                    decoration: const InputDecoration(
+                    style: const TextStyle(color: Color(0xFF1E293B), fontSize: 15),
+                    decoration: InputDecoration(
                       hintText: 'อีเมลของคุณ',
-                      prefixIcon: Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                      filled: true,
+                      fillColor: inputBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: inputBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: inputBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: brandTeal, width: 1.5),
+                      ),
+                      prefixIcon: const Icon(Icons.email_outlined, color: brandTeal),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -237,11 +254,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 6,
-                        color: Colors.black87,
+                        color: Color(0xFF0F172A),
                       ),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'รหัส OTP 6 หลัก',
                         counterText: '',
+                        filled: true,
+                        fillColor: inputBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: brandTeal, width: 1.8),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -250,13 +281,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     TextField(
                       controller: _newPassCtrl,
                       obscureText: _obscure,
-                      style: const TextStyle(color: Colors.black87),
+                      style: const TextStyle(color: Color(0xFF1E293B), fontSize: 15),
                       decoration: InputDecoration(
                         hintText: 'รหัสผ่านใหม่',
-                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+                        filled: true,
+                        fillColor: inputBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: brandTeal, width: 1.5),
+                        ),
+                        prefixIcon: const Icon(Icons.lock_outline, color: brandTeal),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscure ? Icons.visibility_off : Icons.visibility,
+                            _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                             color: const Color(0xFF64748B),
                           ),
                           onPressed: () => setState(() => _obscure = !_obscure),
@@ -269,10 +314,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     TextField(
                       controller: _confirmPassCtrl,
                       obscureText: _obscure,
-                      style: const TextStyle(color: Colors.black87),
-                      decoration: const InputDecoration(
+                      style: const TextStyle(color: Color(0xFF1E293B), fontSize: 15),
+                      decoration: InputDecoration(
                         hintText: 'ยืนยันรหัสผ่านใหม่',
-                        prefixIcon: Icon(Icons.lock_reset, color: AppTheme.primaryColor),
+                        filled: true,
+                        fillColor: inputBg,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: inputBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: brandTeal, width: 1.5),
+                        ),
+                        prefixIcon: const Icon(Icons.lock_reset, color: brandTeal),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -280,16 +339,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                   // Button
                   SizedBox(
-                    height: 52,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading
                           ? null
                           : (_isOtpSent ? _resetPassword : _requestOtp),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: brandTeal,
                         foregroundColor: Colors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: _isLoading
@@ -313,11 +373,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                   if (_isOtpSent) ...[
                     const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () => setState(() => _isOtpSent = false),
-                      child: const Text(
-                        'เปลี่ยนอีเมล / ขอรหัสใหม่',
-                        style: TextStyle(color: Color(0xFF38BDF8)),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => setState(() => _isOtpSent = false),
+                        child: const Text(
+                          'เปลี่ยนอีเมล / ขอรหัสใหม่',
+                          style: TextStyle(color: brandTeal, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ],

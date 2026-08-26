@@ -397,8 +397,9 @@ class _OtpScreenState extends State<OtpScreen> {
                   const SizedBox(height: 20),
 
                   // Resend OTP Action
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         'ไม่ได้รับรหัส? ',
