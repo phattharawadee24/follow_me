@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_image.dart';
 import '../../../models/checkin_model.dart';
 
 class CheckinCard extends StatelessWidget {
@@ -30,7 +31,6 @@ class CheckinCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = checkin.user;
-    final hasUserAvatar = user?.profileImage != null && user!.profileImage!.isNotEmpty;
     final hasImage = checkin.imageUrl != null && checkin.imageUrl!.isNotEmpty;
 
     return Card(
@@ -48,19 +48,10 @@ class CheckinCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                CircleAvatar(
+                AppAvatar(
+                  imageUrl: user?.profileImage,
+                  name: user?.name ?? 'U',
                   radius: 20,
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                  backgroundImage: hasUserAvatar ? NetworkImage(user.profileImage!) : null,
-                  child: !hasUserAvatar
-                      ? Text(
-                          user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : 'U',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
-                        )
-                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -168,41 +159,12 @@ class CheckinCard extends StatelessWidget {
 
           // Image if attached
           if (hasImage)
-            ClipRRect(
+            AppImage(
+              imageUrl: checkin.imageUrl,
+              width: double.infinity,
+              height: 220,
+              fit: BoxFit.cover,
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
-              child: Image.network(
-                checkin.imageUrl!,
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                loadingBuilder: (ctx, child, progress) {
-                  if (progress == null) return child;
-                  return Container(
-                    height: 220,
-                    color: const Color(0xFFF1F5F9),
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  );
-                },
-                errorBuilder: (ctx, error, stackTrace) => Container(
-                  height: 120,
-                  color: const Color(0xFFF1F5F9),
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.broken_image_outlined, color: Color(0xFF94A3B8), size: 32),
-                        SizedBox(height: 4),
-                        Text(
-                          'ไม่สามารถโหลดรูปภาพได้',
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             )
           else
             const SizedBox(height: 4),

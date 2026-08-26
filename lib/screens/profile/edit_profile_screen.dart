@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/errors/api_exception.dart';
 import '../../core/services/api_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_image.dart';
 import '../../models/user_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -99,8 +100,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final hasRemoteAvatar = widget.user.profileImage != null && widget.user.profileImage!.isNotEmpty;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('แก้ไขโปรไฟล์'),
@@ -137,10 +136,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     backgroundColor: const Color(0xFFE2E8F0),
                     backgroundImage: _avatarFile != null
                         ? FileImage(_avatarFile!)
-                        : (hasRemoteAvatar
-                            ? NetworkImage(widget.user.profileImage!)
-                            : null) as ImageProvider?,
-                    child: (_avatarFile == null && !hasRemoteAvatar)
+                        : AppImageHelper.getImageProvider(widget.user.profileImage),
+                    child: (_avatarFile == null && AppImageHelper.getImageProvider(widget.user.profileImage) == null)
                         ? const Icon(Icons.person, size: 54, color: Colors.grey)
                         : null,
                   ),

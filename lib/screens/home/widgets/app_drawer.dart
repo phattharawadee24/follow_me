@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_image.dart';
 import '../../../models/user_model.dart';
 import '../../auth/login_screen.dart';
 import '../../checkin/checkin_screen.dart';
@@ -113,7 +114,6 @@ class _AppDrawerState extends State<AppDrawer> {
   @override
   Widget build(BuildContext context) {
     final user = _user;
-    final hasAvatar = user?.profileImage != null && user!.profileImage!.isNotEmpty;
 
     return Drawer(
       child: ListView(
@@ -127,19 +127,13 @@ class _AppDrawerState extends State<AppDrawer> {
                 end: Alignment.bottomRight,
               ),
             ),
-            currentAccountPicture: CircleAvatar(
+            currentAccountPicture: AppAvatar(
+              imageUrl: user?.profileImage,
+              name: user?.name ?? 'U',
+              radius: 36,
               backgroundColor: Colors.white,
-              backgroundImage: hasAvatar ? NetworkImage(user.profileImage!) : null,
-              child: !hasAvatar
-                  ? Text(
-                      user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : 'U',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
-                      ),
-                    )
-                  : null,
+              textColor: AppTheme.primaryColor,
+              fontSize: 26,
             ),
             accountName: Text(
               user?.name.isNotEmpty == true ? user!.name : 'ผู้ใช้งาน',

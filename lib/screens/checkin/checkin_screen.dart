@@ -51,16 +51,27 @@ class _CheckinScreenState extends State<CheckinScreen> {
     });
 
     try {
-      if (!await Geolocator.isLocationServiceEnabled()) {
-        throw Exception('กรุณาเปิด GPS/บริการระบุตำแหน่งบนอุปกรณ์');
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          _showGpsServiceDialog();
+        }
+        throw Exception('กรุณาเปิด GPS / บริการระบุตำแหน่งบนอุปกรณ์');
       }
 
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          _showPermissionDeniedForeverDialog();
+        }
+        throw Exception('กรุณาเปิดสิทธิ์เข้าถึงพิกัด GPS ในการตั้งค่าแอปพลิเคชัน');
+      }
+
+      if (permission == LocationPermission.denied) {
         throw Exception('แอปไม่ได้รับสิทธิ์เข้าถึงพิกัด GPS');
       }
 
@@ -83,6 +94,64 @@ class _CheckinScreenState extends State<CheckinScreen> {
         _errorMessage = error.toString().replaceFirst('Exception: ', '');
       });
     }
+  }
+
+  void _showGpsServiceDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.location_off_rounded, color: AppTheme.accentColor),
+            SizedBox(width: 8),
+            Text('GPS ปิดอยู่', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text('บริการระบุตำแหน่งบนอุปกรณ์ของคุณปิดอยู่ กรุณาเปิด GPS เพื่อให้แอปสามารถระบุพิกัดตำแหน่งได้'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Geolocator.openLocationSettings();
+            },
+            child: const Text('เปิดการตั้งค่า GPS'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionDeniedForeverDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.security_rounded, color: AppTheme.errorColor),
+            SizedBox(width: 8),
+            Text('สิทธิ์เข้าถึงพิกัด', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text('คุณได้ปฏิเสธสิทธิ์การเข้าถึงพิกัด GPS แบบถาวร กรุณาไปที่การตั้งค่าแอปเพื่อเปิดสิทธิ์ตำแหน่ง'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('ยกเลิก'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Geolocator.openAppSettings();
+            },
+            child: const Text('ไปที่การตั้งค่าแอป'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _moveToCurrentPosition() {

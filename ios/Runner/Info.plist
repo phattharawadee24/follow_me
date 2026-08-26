@@ -26,6 +26,15 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Hardware Permissions for Location (GPS), Camera, and Photos -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>แอปต้องการเข้าถึงพิกัดตำแหน่งของคุณเพื่อใช้ในการระบุตำแหน่งและเช็คอินสถานที่</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>แอปต้องการเข้าถึงพิกัดตำแหน่งของคุณเพื่อแสดงตำแหน่งปัจจุบันบนแผนที่และเช็คอินสถานที่</string>
+	<key>NSCameraUsageDescription</key>
+	<string>แอปต้องการเข้าถึงกล้องถ่ายรูปเพื่อถ่ายภาพสถานที่เช็คอินและเปลี่ยนรูปโปรไฟล์</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>แอปต้องการเข้าถึงคลังรูปภาพเพื่อเลือกรูปภาพสถานที่เช็คอินและรูปโปรไฟล์</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -4,6 +4,7 @@ import '../../core/errors/api_exception.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/storage_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_image.dart';
 import '../../models/user_model.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
@@ -59,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = _user;
-    final hasAvatar = user?.profileImage != null && user!.profileImage!.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
@@ -95,22 +95,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Center(
                     child: Column(
                       children: [
-                        CircleAvatar(
+                        AppAvatar(
+                          imageUrl: user?.profileImage,
+                          name: user?.name ?? 'U',
                           radius: 50,
-                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          backgroundImage: hasAvatar ? NetworkImage(user.profileImage!) : null,
-                          child: !hasAvatar
-                              ? Text(
-                                  user?.name.isNotEmpty == true
-                                      ? user!.name[0].toUpperCase()
-                                      : 'U',
-                                  style: const TextStyle(
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                )
-                              : null,
+                          fontSize: 38,
                         ),
                         const SizedBox(height: 14),
                         Row(
