@@ -379,6 +379,7 @@ class ApiService {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'User-Agent': 'FollowMeApp/1.0.0 (Dart/Flutter; ${Platform.operatingSystem})',
     };
 
     if (requiresAuth) {
@@ -412,14 +413,21 @@ class ApiService {
         default:
           throw const ApiException('ไม่รองรับ HTTP method นี้');
       }
-    } on SocketException {
-      throw const ApiException(
-        'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต',
+    } on SocketException catch (e) {
+      throw ApiException(
+        'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (${e.message}) กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
       );
     } on TimeoutException {
       throw const ApiException('เซิร์ฟเวอร์ตอบสนองช้า กรุณาลองใหม่อีกครั้ง');
+    } on HandshakeException catch (e) {
+      throw ApiException('เกิดข้อผิดพลาดในการตรวจสอบความปลอดภัย (SSL): ${e.message}');
+    } on HttpException catch (e) {
+      throw ApiException('เกิดข้อผิดพลาด HTTP: ${e.message}');
     } on http.ClientException catch (error) {
       throw ApiException(_clientErrorMessage(error));
+    } catch (error) {
+      if (error is ApiException) rethrow;
+      throw ApiException('เชื่อมต่อ API ไม่สำเร็จ: $error');
     }
 
     return _decodeResponse(response.statusCode, response.body);
@@ -428,16 +436,26 @@ class ApiService {
   static Future<http.StreamedResponse> _sendMultipart(
     http.MultipartRequest request,
   ) async {
+    request.headers['Accept'] = 'application/json';
+    request.headers['User-Agent'] = 'FollowMeApp/1.0.0 (Dart/Flutter; ${Platform.operatingSystem})';
+
     try {
       return await request.send().timeout(timeoutDuration);
-    } on SocketException {
-      throw const ApiException(
-        'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต',
+    } on SocketException catch (e) {
+      throw ApiException(
+        'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (${e.message}) กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
       );
     } on TimeoutException {
       throw const ApiException('เซิร์ฟเวอร์ตอบสนองช้า กรุณาลองใหม่อีกครั้ง');
+    } on HandshakeException catch (e) {
+      throw ApiException('เกิดข้อผิดพลาดในการตรวจสอบความปลอดภัย (SSL): ${e.message}');
+    } on HttpException catch (e) {
+      throw ApiException('เกิดข้อผิดพลาด HTTP: ${e.message}');
     } on http.ClientException catch (error) {
       throw ApiException(_clientErrorMessage(error));
+    } catch (error) {
+      if (error is ApiException) rethrow;
+      throw ApiException('เชื่อมต่อ API ไม่สำเร็จ: $error');
     }
   }
 

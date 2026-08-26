@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'core/services/storage_service.dart';
@@ -5,8 +6,19 @@ import 'core/theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true
+      ..findProxy = HttpClient.findProxyFromEnvironment;
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = MyHttpOverrides();
   runApp(const FollowMeApp());
 }
 
