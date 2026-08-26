@@ -454,7 +454,7 @@ class ApiService {
           data['error'] ??
           data['detail'] ??
           'คำขอไม่สำเร็จ ($statusCode)';
-      throw ApiException(message.toString(), statusCode: statusCode);
+      throw ApiException(message.toString(), statusCode: statusCode, data: data);
     }
     return data;
   }
