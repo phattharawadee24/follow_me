@@ -1,5 +1,8 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://where-am-i-silk.vercel.app';
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://where-am-i-silk.vercel.app',
+  );
 
   // Auth & Profile
   static const String register = '/api/auth/register';
