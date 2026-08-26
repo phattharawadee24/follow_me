@@ -21,20 +21,27 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> {
+  late final TextEditingController _emailCtrl;
   final _otpCtrl = TextEditingController();
   bool _isLoading = false;
   bool _isResending = false;
+  bool _isEditingEmail = false;
   int _countdown = 60;
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _startCountdown();
+    _emailCtrl = TextEditingController(text: widget.email);
+    _isEditingEmail = widget.email.isEmpty;
+    if (widget.email.isNotEmpty) {
+      _startCountdown();
+    }
   }
 
   @override
   void dispose() {
+    _emailCtrl.dispose();
     _otpCtrl.dispose();
     _timer?.cancel();
     super.dispose();
@@ -52,7 +59,21 @@ class _OtpScreenState extends State<OtpScreen> {
     });
   }
 
+  String get _currentEmail => _emailCtrl.text.trim();
+
   Future<void> _verifyOtp() async {
+    final email = _currentEmail;
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาระบุอีเมลให้ถูกต้อง'),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final otp = _otpCtrl.text.trim();
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,7 +89,7 @@ class _OtpScreenState extends State<OtpScreen> {
     setState(() => _isLoading = true);
     try {
       final res = await ApiService.verifyOtp(
-        email: widget.email,
+        email: email,
         otp: otp,
       );
 
@@ -101,11 +122,23 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   Future<void> _resendOtp() async {
+    final email = _currentEmail;
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณาระบุอีเมลที่จะส่งรหัส OTP'),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     if (_countdown > 0) return;
 
     setState(() => _isResending = true);
     try {
-      final res = await ApiService.resendOtp(email: widget.email);
+      final res = await ApiService.resendOtp(email: email);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -131,6 +164,8 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final email = _currentEmail;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -191,20 +226,53 @@ class _OtpScreenState extends State<OtpScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'กรอกรหัส 6 หลักที่ได้รับทางอีเมล\n${widget.email}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 14,
-                      height: 1.4,
+
+                  if (!_isEditingEmail && email.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'ส่งรหัสไปยัง: $email',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 16, color: Color(0xFF38BDF8)),
+                          tooltip: 'แก้ไขอีเมล',
+                          onPressed: () => setState(() => _isEditingEmail = true),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _emailCtrl,
+                      keyboardType: TextInputType.emailAddress,
+                      style: const TextStyle(color: Colors.black87),
+                      decoration: InputDecoration(
+                        hintText: 'กรอกอีเมลของคุณ',
+                        prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.primaryColor),
+                        suffixIcon: email.isNotEmpty && widget.email.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.check, color: AppTheme.successColor),
+                                onPressed: () => setState(() => _isEditingEmail = false),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 28),
 
                   // OTP Input
                   TextField(
                     controller: _otpCtrl,
+                    autofocus: true,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
                     textAlign: TextAlign.center,
@@ -289,3 +357,4 @@ class _OtpScreenState extends State<OtpScreen> {
     );
   }
 }
+

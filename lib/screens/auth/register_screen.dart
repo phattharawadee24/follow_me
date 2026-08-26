@@ -38,11 +38,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    final email = _emailCtrl.text.trim();
     try {
       final res = await ApiService.register(
         fname: _fnameCtrl.text.trim(),
         lname: _lnameCtrl.text.trim(),
-        email: _emailCtrl.text.trim(),
+        email: email,
         password: _passCtrl.text,
       );
 
@@ -59,20 +60,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => OtpScreen(
-            email: _emailCtrl.text.trim(),
+            email: email,
             isFromRegister: true,
           ),
         ),
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.message),
-          backgroundColor: AppTheme.errorColor,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      
+      final isEmailExists = error.statusCode == 409 ||
+          error.message.toLowerCase().contains('exist') ||
+          error.message.contains('เคยลงทะเบียน') ||
+          error.message.contains('มีอยู่ในระบบ');
+
+      if (isEmailExists) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFF38BDF8)),
+                SizedBox(width: 8),
+                Text('อีเมลนี้มีอยู่ในระบบแล้ว', style: TextStyle(color: Colors.white, fontSize: 18)),
+              ],
+            ),
+            content: Text(
+              'อีเมล $email ได้ลงทะเบียนไว้แล้ว หากคุณยังไม่ได้ยืนยันรหัส OTP สามารถไปที่หน้ากรอก OTP เพื่อยืนยันอีเมลได้ทันที',
+              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('ปิด', style: TextStyle(color: Color(0xFF94A3B8))),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => OtpScreen(
+                        email: email,
+                        isFromRegister: true,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('ไปกรอกรหัส OTP', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.message),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -253,6 +303,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Direct OTP Link
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => OtpScreen(
+                                email: _emailCtrl.text.trim(),
+                                isFromRegister: true,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.pin_outlined, size: 18, color: Color(0xFF38BDF8)),
+                        label: const Text(
+                          'มีรหัส OTP อยู่แล้ว? ยืนยันอีเมลที่นี่',
+                          style: TextStyle(
+                            color: Color(0xFF38BDF8),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
